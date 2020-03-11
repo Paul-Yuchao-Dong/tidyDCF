@@ -1,0 +1,101 @@
+---
+title: "dev"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{dev}
+  %\VignetteEncoding{UTF-8}
+  %\VignetteEngine{knitr::rmarkdown}
+editor_options: 
+  chunk_output_type: console
+---
+
+```{r, include = FALSE}
+knitr::opts_chunk$set(
+  collapse = TRUE,
+  comment = "#>"
+)
+```
+
+```{r setup}
+Sys.setenv(JAVA_HOME="c:/Users/paul.dong/apps/jdk11.0.6_10/")
+
+library(knitr)
+library(kableExtra)
+library(ggpage)
+library(magrittr)
+library(tidyverse)
+library(WDI)
+library(pdftools)
+library(tabulizer)
+library(fuzzyjoin)
+library(rvest)
+library(janitor)
+library(tidyxl)
+
+
+# library(tidyDCF)
+devtools::load_all()
+```
+
+```{r}
+prospectus.pdf <- here::here("data","saudi-aramco-prospectus-en.pdf")
+```
+
+
+```{r}
+# 4.6.1.2 - Long reserves life
+inputs <- prospectus.pdf %>% 
+  pdf_text() %>% 
+  read_lines() %>% 
+  grep("proved reserves life", ., value = TRUE) %>% 
+  str_match_all("[0-9]+") %>% 
+  pluck(1) %>% 
+  unlist() %>% 
+  first() %>% 
+  as.numeric() %>% 
+  set_names(c("LONG_RESERVES_LIFE")) %>% 
+  as.list()
+
+inputs %>% enframe() %>% unnest(value) %>% kable()
+```
+```{r}
+# Table 42 - Gearing and reconciliation
+inputs <- extract.values.f(
+    pdf.file = prospectus.pdf, 
+    page     = 220, 
+    names    = c("Total borrowings", "Cash and cash equivalents", 
+                 "Total equity")
+  ) %>% 
+  set_names(c("TOTAL_BORROWINGS", "CASH_AND_CASH_EQUIVALENTS", 
+              "TOTAL_EQUITY")) %>%
+  as.list() %>% 
+  append(inputs, .)
+
+inputs %>% enframe() %>% unnest(value) %>% kable()
+```
+```{r}
+f <- system.file("examples", "data.pdf", package = "tabulizer")
+
+# extract table from first page of example PDF
+tab <- extract_tables(f, pages = 1)
+head(tab[[1]])
+```
+```{r}
+f2 <- "https://github.com/leeper/tabulizer/raw/master/inst/examples/data.pdf"
+extract_tables(f2, pages = 2)
+
+```
+```{r}
+# Extract tables by deciding for each page individually
+extract_tables(f2, method = "decide")
+```
+```{r}
+# attempt to coerce tables to data.frames
+extract_tables(f, pages = 2, output = "data.frame")
+```
+
+```{r}
+areas <- locate_areas(f, pages = 1)
+```
+
+

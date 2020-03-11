@@ -11,3 +11,11 @@ Encoding: UTF-8
 LazyData: true
 URL: https://github.com/Paul-Yuchao-Dong/tidyDCF
 BugReports: https://github.com/Paul-Yuchao-Dong/tidyDCF/issues
+Suggests: 
+    knitr,
+    rmarkdown
+VignetteBuilder: knitr
+Imports: 
+    tabulizer,
+    fuzzyjoin
+RoxygenNote: 7.0.2
